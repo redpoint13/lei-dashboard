@@ -80,24 +80,33 @@ consensus forecasts. Only two of the eleven series above can carry a
 genuine, sourced forward-looking value in v1:
 
 - **Interest rate spread (#9):** computed from two independent free,
-  citable sources — the Fed's Summary of Economic Projections (fed funds
-  rate path) and the Philadelphia Fed's Survey of Professional Forecasters
-  (10-year Treasury yield median forecast). These two surveys publish on
-  different quarterly calendars (SEP: Mar/Jun/Sep/Dec; SPF: Feb/May/Aug/Nov)
-  and don't automatically line up. **Horizon-matching rule:** use each
-  survey's forecast for the same target calendar year-end (e.g. both
-  series' "end of 2026" projection), and record the `as_of` date each was
-  actually published — never interpolate between the two surveys. If one
-  survey hasn't yet published a same-year-end target (e.g. early in the
-  year), fall back to its most recently published value for that target and
-  let the `as_of` date make the staleness visible.
+  citable sources — the Fed's Summary of Economic Projections (SEP, fed
+  funds rate path) and the Philadelphia Fed's **Livingston Survey**
+  (10-year Treasury note yield median forecast). Correction from the
+  original draft: the Philly Fed's *quarterly* Survey of Professional
+  Forecasters doesn't cover Treasury yields at all — the Treasury-yield
+  forecast is the Livingston Survey, a semiannual (June/December), separate
+  panel the Philly Fed also runs. Its cadence actually lines up well with
+  the SEP: both publish in June and December (SEP is quarterly —
+  Mar/Jun/Sep/Dec — so two of its four releases coincide with Livingston's
+  two). **Horizon-matching rule:** use each survey's forecast for the same
+  target calendar year-end (e.g. both series' "end of 2026" projection),
+  and record the `as_of` date each was actually published — never
+  interpolate between the two surveys. Example with real, current data:
+  the Dec 10, 2025 SEP put the median fed funds rate at 3.4% for end of
+  2026; the Dec 19, 2025 Livingston Survey put the 10-year Treasury yield
+  at 4.00% for Dec 31, 2026 — spread = 0.60 points, `as_of` recorded
+  separately per source since they published on different days the same
+  month.
 - **S&P 500 (#7):** curated from publicly reported Wall Street strategist
-  year-end index targets. These are typically a spread of individual bank
-  targets, not a single number — the schema (§6) stores `value` as the
-  median/consensus figure alongside `value_low`/`value_high` so the
-  dispersion isn't discarded. Updated when a new round of targets is
-  published (roughly annually, with updates if major revisions occur), with
-  sources cited per entry.
+  year-end index targets (a Reuters poll of sell-side strategists,
+  published periodically — not on a fixed calendar, update when a new
+  round is reported). These are a spread of individual bank targets, not a
+  single number — the schema (§6) stores `value` as the median/consensus
+  figure alongside `value_low`/`value_high` so the dispersion isn't
+  discarded. Real example: the January 2026 Reuters poll of 19 strategists
+  had a median year-end-2026 target of 7,600 (range: Bank of America's
+  7,100 low to Oppenheimer's 8,100 high).
 
 For the other 9 series (including the LEI headline itself), the UI shows an
 explicit **"No analyst consensus forecast available for this series"** state
@@ -177,7 +186,7 @@ forecasts                          -- only for the 2 series with real coverage
   value_low     REAL NULL          -- low end of published range (e.g. 10th pct or min)
   value_high    REAL NULL          -- high end of published range (e.g. 90th pct or max)
   source_url    TEXT
-  source_label  TEXT               -- e.g. "Philly Fed SPF, 2026 Q3"
+  source_label  TEXT               -- e.g. "Philly Fed Livingston Survey, Dec 2025"
   PRIMARY KEY (indicator_id, as_of, horizon)
 
 refresh_log
@@ -289,11 +298,23 @@ Per standard TDD workflow:
 
 ## 11. Open items for implementation time
 
-- Decide exact wording/sourcing cadence for the S&P 500 strategist-target
-  curation (which outlets/roundups to cite).
+None remaining — the S&P 500 sourcing question is resolved below.
 
-Resolved during spec review (both confirmed via direct source-checking,
-not assumption — see §3):
+Resolved during spec review (all confirmed via direct source-checking,
+not assumption):
+
+- S&P 500 forecast sourcing (§4): Reuters polls of sell-side strategists,
+  cited per entry when published (irregular cadence, not fixed). Real
+  current example sourced and verified: January 2026 poll of 19
+  strategists, median 7,600 for year-end 2026 (BofA 7,100 low, Oppenheimer
+  8,100 high).
+- Interest rate spread forecast sourcing (§4): corrected from the
+  original draft — the 10-year Treasury yield forecast comes from the
+  Philly Fed's semiannual **Livingston Survey**, not its quarterly SPF
+  (which doesn't cover Treasury yields). Real current example sourced and
+  verified: Dec 2025 Livingston Survey, 10-year yield 4.00% for Dec 31,
+  2026; combined with the Dec 2025 SEP's 3.4% fed funds median for the
+  same date → 0.60-point spread.
 - Component #3 (consumer goods and materials): `ACOGNO` is the final free
   proxy. The Conference Board's own Feb 2026 LEI Technical Notes footnote
   this component as "based on our estimates," confirming it's an internal
