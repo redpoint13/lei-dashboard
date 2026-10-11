@@ -52,4 +52,21 @@ describe("startScheduler", () => {
     await vi.advanceTimersByTimeAsync(5000);
     expect(runNow).not.toHaveBeenCalled();
   });
+
+  it("a rejected runNow does not crash and does not stop the recurring interval", async () => {
+    const runNow = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("transient upstream failure"))
+      .mockResolvedValue(undefined);
+    const handle = startScheduler({
+      hasAnyObservations: () => true,
+      intervalMs: 1000,
+      runNow,
+    });
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(runNow).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(runNow).toHaveBeenCalledTimes(2);
+    handle.stop();
+  });
 });

@@ -5,12 +5,18 @@ export function startScheduler(options: {
 }): { stop: () => void } {
   const { hasAnyObservations, intervalMs, runNow } = options;
 
+  const safeRunNow = () => {
+    runNow().catch((error) => {
+      console.error("Scheduled refresh run failed:", error);
+    });
+  };
+
   if (!hasAnyObservations()) {
-    void runNow();
+    safeRunNow();
   }
 
   const timer = setInterval(() => {
-    void runNow();
+    safeRunNow();
   }, intervalMs);
 
   return {
