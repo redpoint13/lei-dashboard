@@ -56,6 +56,23 @@ what it's used to predict. Runs as a self-hosted Docker container.
 Every proxy/substitute is labeled as such in the UI, not presented as the
 official component.
 
+**Display frequency:** each indicator is plotted at its own native reporting
+frequency (daily for `SP500`/`T10YFF`, weekly for `ICSA`, monthly for the
+rest) — v1 does not aggregate high-frequency series to a synthetic monthly
+value for cross-card comparison. This is an explicit decision, not an
+oversight: the official LEI methodology monthly-averages the daily/weekly
+inputs to build its composite, but since v1 doesn't compute that composite
+(see Non-goals), there's no composite to feed a monthly average into. Each
+card's chart is self-contained.
+
+**Directional polarity:** some components are counter-cyclical — a *rising*
+value signals *worsening*, not improving, conditions. `ICSA` (initial
+jobless claims) and the `NFCI` proxy for the Leading Credit Index (#8) are
+both inverted in this sense. Each indicator's metadata carries an
+`inverted` flag (§6); the UI uses it to add a visible "higher = weaker"
+annotation and an inverted-sense color cue, so a casual reader doesn't read
+rising claims as good news.
+
 ## 4. Analyst predictions: realistic coverage
 
 Individual LEI components are inputs to forecasting, not targets of published
@@ -65,13 +82,22 @@ genuine, sourced forward-looking value in v1:
 - **Interest rate spread (#9):** computed from two independent free,
   citable sources — the Fed's Summary of Economic Projections (fed funds
   rate path) and the Philadelphia Fed's Survey of Professional Forecasters
-  (10-year Treasury yield median forecast). Both are quarterly and manually
-  transcribed into the curated-forecast data file, with the source document
-  cited.
+  (10-year Treasury yield median forecast). These two surveys publish on
+  different quarterly calendars (SEP: Mar/Jun/Sep/Dec; SPF: Feb/May/Aug/Nov)
+  and don't automatically line up. **Horizon-matching rule:** use each
+  survey's forecast for the same target calendar year-end (e.g. both
+  series' "end of 2026" projection), and record the `as_of` date each was
+  actually published — never interpolate between the two surveys. If one
+  survey hasn't yet published a same-year-end target (e.g. early in the
+  year), fall back to its most recently published value for that target and
+  let the `as_of` date make the staleness visible.
 - **S&P 500 (#7):** curated from publicly reported Wall Street strategist
-  year-end index targets (financial press, e.g. year-end outlook roundups).
-  Updated when a new round of targets is published (roughly annually, with
-  updates if major revisions occur), with sources cited per entry.
+  year-end index targets. These are typically a spread of individual bank
+  targets, not a single number — the schema (§6) stores `value` as the
+  median/consensus figure alongside `value_low`/`value_high` so the
+  dispersion isn't discarded. Updated when a new round of targets is
+  published (roughly annually, with updates if major revisions occur), with
+  sources cited per entry.
 
 For the other 9 series (including the LEI headline itself), the UI shows an
 explicit **"No analyst consensus forecast available for this series"** state
@@ -86,16 +112,35 @@ Single Docker container running a Next.js (TypeScript, App Router) app:
 
 - **Web server** — Next.js serves pages and API routes. Reads only from the
   local SQLite file. No live upstream HTTP calls in the request path.
-- **Refresh job** — a scheduled task (`node-cron`) running in the same
-  Node process, triggered daily. Fetches each live FRED series, upserts new
-  observations into SQLite. Logs success/failure per series; a failure on
-  one series does not block the others.
+- **Refresh job** — a scheduled task running daily. Fetches each live FRED
+  series and upserts a **rolling 180-day window** of observations (not just
+  the latest point) into SQLite, since government series revise prior
+  months' values after initial release; re-pulling only the newest point
+  would silently freeze stale, since-revised numbers. Logs success/failure
+  per series; a failure on one series does not block the others.
+  - **Scheduling implementation:** registered via Next.js's
+    `instrumentation.ts` `register()` hook rather than an ad-hoc timer
+    scattered in app code, tying the job's lifecycle explicitly to the
+    server process. v1 assumes the container always runs as a **single
+    process/single replica** — this sidesteps duplicate-timer risk from
+    multiple workers or hot-reload without adding a file/DB mutex lock,
+    which would be unneeded complexity for a single-container self-hosted
+    deployment. If this ever needs multiple replicas, add a lock before
+    scaling, not before there's a reason to.
+  - **Cold-start hydration:** on boot, before registering the recurring
+    schedule, the job checks whether `observations` is empty (fresh
+    deployment) and if so runs an immediate full-history fetch rather than
+    waiting for the next scheduled time — otherwise a fresh container would
+    show a blank dashboard for up to 24 hours.
 - **SQLite file** — lives on a Docker volume (e.g. `/data/econ.db`) so it
   survives container restarts/rebuilds without re-fetching full history.
 - **Curated content** — indicator descriptions, proxy labels, and the
-  manually-maintained forecast/headline values live in versioned JSON/YAML
-  files in the repo (not the database), since they change rarely and should
-  go through normal code review/git history, not a live-editable store.
+  manually-maintained forecast/headline/ISM values are JSON files. The app
+  reads them from a mounted volume path (e.g. `/data/curated/*.json`) if
+  present, falling back to the repo-committed defaults otherwise. A monthly
+  data update (new ISM reading, new LEI headline number) is then a file
+  drop onto the volume, not a rebuild-and-redeploy of the image — the
+  repo-committed copies remain the versioned baseline/starting point.
 
 Rejected alternatives (from the design discussion): a second container for
 the refresh job (unnecessary operational overhead for ~11 series), and
@@ -112,6 +157,10 @@ indicators
   fred_series   TEXT NULL          -- e.g. "AWHMAN", NULL if no live series
   is_proxy      BOOLEAN
   proxy_note    TEXT NULL          -- shown in UI when is_proxy = true
+  frequency     TEXT               -- "daily" | "weekly" | "monthly"
+  units         TEXT               -- e.g. "Hours", "Thousands", "Percent", "Index (1982=100)"
+  inverted      BOOLEAN DEFAULT FALSE  -- true = rising value signals worsening conditions
+  display_format TEXT              -- formatting mask for UI (decimals, "%", "$")
 
 observations
   indicator_id  TEXT REFERENCES indicators(id)
@@ -122,11 +171,14 @@ observations
 
 forecasts                          -- only for the 2 series with real coverage
   indicator_id  TEXT REFERENCES indicators(id)
-  as_of         TEXT               -- date the forecast was published
-  horizon       TEXT               -- e.g. "2026-Q4"
-  value         REAL
+  as_of         TEXT               -- date the forecast was actually published
+  horizon       TEXT               -- target date, e.g. "2026-12-31"
+  value         REAL               -- median/consensus figure
+  value_low     REAL NULL          -- low end of published range (e.g. 10th pct or min)
+  value_high    REAL NULL          -- high end of published range (e.g. 90th pct or max)
   source_url    TEXT
   source_label  TEXT               -- e.g. "Philly Fed SPF, 2026 Q3"
+  PRIMARY KEY (indicator_id, as_of, horizon)
 
 refresh_log
   indicator_id  TEXT
@@ -134,11 +186,14 @@ refresh_log
   status        TEXT               -- "ok" | "error"
   detail        TEXT NULL
 ```
+`refresh_log` carries an index on `(indicator_id, run_at)` so the staleness
+checks in §8 don't require a full table scan across all 11 indicators.
 
 Curated descriptions/content (not in SQLite — versioned JSON in the repo):
 
 ```
-content/indicators/<id>.json
+content/indicators/<id>.json     -- repo-committed defaults; shape-identical
+                                   -- overrides may live at /data/curated/<id>.json
 {
   "title": "...",
   "whatItMeasures": "...",
@@ -146,7 +201,19 @@ content/indicators/<id>.json
   "sourceName": "...",
   "sourceUrl": "...",
   "isProxy": true,
-  "proxyExplanation": "..."
+  "proxyExplanation": "...",
+  "proxyMethodologyUrl": "..."    -- linked from the proxy UI badge (§7)
+}
+
+content/headline.json             -- the LEI headline card's curated content
+{
+  "indexLevel": 0,
+  "momPercentChange": 0,
+  "sixMonthAnnualizedGrowth": 0,  -- the Conference Board's own 3D rule
+                                   -- (duration/depth/diffusion) leans on
+                                   -- momentum, not the raw level
+  "asOf": "2026-09-30",
+  "recessionSignalCommentary": "..."  -- optional qualitative text from CB's release
 }
 ```
 
@@ -159,9 +226,21 @@ content/indicators/<id>.json
 - Charts are dynamic/interactive (zoom, hover tooltips, time-range select).
   Chart implementation follows the dataviz skill's guidance (form, color,
   interaction rules) at build time rather than being specified here.
+- Detail-view historical charts include **NBER recession shading** (FRED
+  series `USREC`, free, no proxy needed) — the main real-world use of
+  LEI-style indicators is judging lead time before downturns, so showing
+  past recessions in context is core to the feature, not decoration.
+- Indicators flagged `inverted` (§6) get a visible "higher = weaker" note
+  and an inverted color sense so a rising line doesn't read as good news.
+- Proxy/substitute badges (#3, #4, #8, #10) link directly to that
+  indicator's `proxyExplanation`/`proxyMethodologyUrl`, not just a generic
+  "this is a proxy" tooltip — the point is letting a reader actually see
+  how the substitute can diverge from the official component.
 - The LEI headline gets a distinct, prominent card at the top of the
-  dashboard (not just another grid tile), since it's the recognizable
-  number people look for.
+  dashboard (not just another grid tile), showing the index level, 1-month
+  % change, **and** the 6-month annualized growth rate, since the
+  Conference Board's own recession-signal rule (duration/depth/diffusion)
+  is driven by momentum, not the raw level.
 
 ## 8. Error handling
 
@@ -177,6 +256,11 @@ content/indicators/<id>.json
 - Manual/curated data (headline LEI, ISM proxy, forecasts) has no automated
   freshness check — staleness here is an editorial/content responsibility,
   flagged via a visible "as of <date>" label sourced from the content file.
+- **Revisions:** because the refresh job re-pulls a rolling 180-day window
+  (§5) rather than only the newest point, a revised prior-month value from
+  the source simply overwrites the old row via the existing
+  `PRIMARY KEY (indicator_id, date)` upsert — no separate revision-detection
+  logic is needed.
 
 ## 9. Testing
 
@@ -200,8 +284,8 @@ Per standard TDD workflow:
   `/data` for the SQLite file.
 - `FRED_API_KEY` passed as an environment variable (free key, user
   registers at FRED).
-- Container's internal `node-cron` schedule fires the refresh job; no
-  external scheduler/host cron dependency.
+- Container's internal scheduler (registered via `instrumentation.ts`, §5)
+  fires the refresh job daily; no external scheduler/host cron dependency.
 
 ## 11. Open items for implementation time
 
