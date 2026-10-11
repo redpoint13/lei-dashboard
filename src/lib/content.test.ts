@@ -61,6 +61,34 @@ describe("loadManualObservations", () => {
   afterEach(() => {
     rmSync(dataDir, { recursive: true, force: true });
     vi.unstubAllEnvs();
+    vi.restoreAllMocks();
+  });
+
+  it("falls back to the repo default observations when the override file is malformed", () => {
+    const repoRoot = mkdtempSync(path.join(tmpdir(), "econ-repo-"));
+    try {
+      mkdirSync(path.join(repoRoot, "content", "manual-observations"), { recursive: true });
+      writeFileSync(
+        path.join(repoRoot, "content", "manual-observations", "test_indicator.json"),
+        JSON.stringify({ observations: [{ date: "2026-01-01", value: 48.5 }] }),
+      );
+      vi.spyOn(process, "cwd").mockReturnValue(repoRoot);
+
+      vi.stubEnv("DATA_DIR", dataDir);
+      mkdirSync(path.join(dataDir, "curated", "manual-observations"), { recursive: true });
+      writeFileSync(
+        path.join(dataDir, "curated", "manual-observations", "test_indicator.json"),
+        "{not valid json",
+      );
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      expect(loadManualObservations("test_indicator")).toEqual([
+        { date: "2026-01-01", value: 48.5 },
+      ]);
+      expect(errorSpy).toHaveBeenCalled();
+    } finally {
+      rmSync(repoRoot, { recursive: true, force: true });
+    }
   });
 
   it("returns [] when no manual-observations file exists for an indicator", () => {

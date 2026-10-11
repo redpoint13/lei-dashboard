@@ -55,9 +55,23 @@ export function loadHeadlineContent(): HeadlineContent {
   return loadJsonWithFallback<HeadlineContent>(overridePath, defaultPath);
 }
 
-export function loadManualObservations(
-  id: string,
-): { date: string; value: number }[] {
+type ManualObservation = { date: string; value: number };
+
+/** Returns the observations, or null if the file is missing or unparseable. */
+function readManualObservations(filePath: string): ManualObservation[] | null {
+  if (!existsSync(filePath)) return null;
+  try {
+    const parsed = JSON.parse(readFileSync(filePath, "utf-8")) as {
+      observations: ManualObservation[];
+    };
+    return parsed.observations;
+  } catch (err) {
+    console.error(`Malformed manual observations at ${filePath}:`, err);
+    return null;
+  }
+}
+
+export function loadManualObservations(id: string): ManualObservation[] {
   const overridePath = path.join(
     getDataDir(),
     "curated",
@@ -70,15 +84,9 @@ export function loadManualObservations(
     "manual-observations",
     `${id}.json`,
   );
-  const pathToUse = existsSync(overridePath) ? overridePath : defaultPath;
-  if (!existsSync(pathToUse)) return [];
-  try {
-    const parsed = JSON.parse(readFileSync(pathToUse, "utf-8")) as {
-      observations: { date: string; value: number }[];
-    };
-    return parsed.observations;
-  } catch (err) {
-    console.error(`Malformed manual observations at ${pathToUse}:`, err);
-    return [];
-  }
+  return (
+    readManualObservations(overridePath) ??
+    readManualObservations(defaultPath) ??
+    []
+  );
 }
