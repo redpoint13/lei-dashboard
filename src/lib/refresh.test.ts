@@ -108,6 +108,28 @@ describe("refreshRecessionPeriods", () => {
       { startDate: "2020-02-01", endDate: "2020-03-01" },
     ]);
   });
+
+  it("captures a trailing open recession period when the series ends still at value 1", async () => {
+    const db = openDb(":memory:");
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        observations: [
+          { date: "2020-01-01", value: "0" },
+          { date: "2020-02-01", value: "1" },
+          { date: "2020-03-01", value: "1" },
+          // no closing "0" — the series ends while still in recession
+        ],
+      }),
+    }) as unknown as typeof fetch;
+
+    await refreshRecessionPeriods(db, "key", fetchImpl);
+
+    expect(getRecessionPeriods(db)).toEqual([
+      { startDate: "2020-02-01", endDate: "2020-03-01" },
+    ]);
+  });
 });
 
 describe("applyManualObservations", () => {
