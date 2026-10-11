@@ -43,14 +43,14 @@ what it's used to predict. Runs as a self-hosted Docker container.
 |---|---|---|---|
 | 1 | Average weekly hours, manufacturing | FRED `AWHMAN` | Live, direct |
 | 2 | Average weekly initial jobless claims | FRED `ICSA` | Live, direct |
-| 3 | New orders, consumer goods and materials | FRED `ACOGNO` (consumer goods only — Census discontinued the combined "and materials" series; "materials" portion not separately available free) | Live, **partial proxy** |
+| 3 | New orders, consumer goods and materials | FRED `ACOGNO` (consumer goods only). Confirmed via the Conference Board's own [Feb 2026 LEI Technical Notes](https://www.conference-board.org/pdf_free/press/US%20LEI%20Technical%20Notes-Feb%202026.pdf): this component is explicitly footnoted as "based on our estimates" — i.e. not a pass-through of any single public Census series, so there is no free series to fully replicate, only the closest available input | Live, **partial proxy (confirmed final)** |
 | 4 | ISM Index of New Orders | No free API (ISM licenses the data series; only the monthly headline commentary is free) | **Manual proxy** — entered monthly from ISM's free press release, labeled as manually curated |
 | 5 | New orders, nondefense capital goods ex-aircraft | FRED `NEWORDER` | Live, direct |
 | 6 | Building permits, new private housing | FRED `PERMIT` | Live, direct |
 | 7 | S&P 500 | FRED `SP500` | Live, direct |
 | 8 | Leading Credit Index | Proprietary, no free equivalent | **Substitute proxy**: Chicago Fed National Financial Conditions Index, FRED `NFCI` — labeled clearly as a substitute, not the official LCI |
 | 9 | Interest rate spread (10yr Treasury − Fed funds) | FRED `T10YFF` | Live, direct |
-| 10 | Consumer expectations | FRED `UMCSENT` (overall Michigan Sentiment index — the Michigan survey's distinct "Index of Consumer Expectations" sub-index is not confirmed available as a standalone free FRED series; verify during implementation and fall back to `UMCSENT` if unavailable) | Live, **partial proxy** |
+| 10 | Consumer expectations | FRED `UMCSENT` (overall Michigan Sentiment index). Confirmed via FRED's own search catalog: no series titled "Index of Consumer Expectations" exists on FRED — `UMCSENT` is the only University of Michigan survey series FRED carries, so it's the final answer, not a fallback pending verification | Live, **partial proxy (confirmed final)** |
 | — | **Official LEI headline** (index level + MoM % change) | Conference Board monthly press release (free, not an API) | **Manual entry**, monthly |
 
 Every proxy/substitute is labeled as such in the UI, not presented as the
@@ -289,11 +289,17 @@ Per standard TDD workflow:
 
 ## 11. Open items for implementation time
 
-- Confirm the exact FRED series (if any) for the Michigan survey's
-  standalone "Index of Consumer Expectations" sub-index; fall back to
-  `UMCSENT` if it doesn't exist as a free series.
-- Confirm whether a combined "consumer goods and materials" series exists
-  anywhere free, or whether `ACOGNO` (consumer goods only) is the final
-  answer for component #3.
 - Decide exact wording/sourcing cadence for the S&P 500 strategist-target
   curation (which outlets/roundups to cite).
+
+Resolved during spec review (both confirmed via direct source-checking,
+not assumption — see §3):
+- Component #3 (consumer goods and materials): `ACOGNO` is the final free
+  proxy. The Conference Board's own Feb 2026 LEI Technical Notes footnote
+  this component as "based on our estimates," confirming it's an internal
+  estimate with no single public series to fully replicate — not a gap in
+  our research.
+- Component #10 (consumer expectations): `UMCSENT` is the final free
+  proxy. FRED's own search catalog has no series titled "Index of Consumer
+  Expectations" — `UMCSENT` is the only University of Michigan survey
+  series FRED carries.
