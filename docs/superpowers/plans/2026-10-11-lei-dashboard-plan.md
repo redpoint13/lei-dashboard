@@ -2480,7 +2480,7 @@ git commit -m "Add staleness detection and value formatting utilities"
 - Modify: `src/app/page.tsx`
 
 **Interfaces:**
-- Consumes: `getAppDb` (Task 8); `getLatestObservation`, `getObservations`, `getLatestForecast` (Task 2); `INDICATOR_REGISTRY` (Task 3); `loadIndicatorContent`, `loadHeadlineContent` (Task 4); `isStale` (Task 10); `IndicatorContent`, `HeadlineContent` (Task 4)
+- Consumes: `getAppDb` (Task 8); `getLatestObservation`, `getObservations` (Task 2); `INDICATOR_REGISTRY` (Task 3); `loadIndicatorContent`, `loadHeadlineContent` (Task 4); `isStale` (Task 10); `IndicatorContent`, `HeadlineContent` (Task 4)
 - Produces:
   - `interface DashboardCardViewModel { id: string; content: IndicatorContent; latestValue: { date: string; value: number } | null; recentObservations: { date: string; value: number }[]; displayFormat: string; inverted: boolean; isStale: boolean }`
   - `interface DashboardViewModel { headline: HeadlineContent; cards: DashboardCardViewModel[] }`
@@ -3192,7 +3192,7 @@ git commit -m "Add indicator detail page with recession shading, forecast overla
 - Create: `src/app/api/health/route.ts`
 
 **Interfaces:**
-- Consumes: `getRefreshLog` (Task 2); `INDICATOR_REGISTRY` (Task 3)
+- Consumes: `INDICATOR_REGISTRY` (Task 3). Queries the `refresh_log` table directly via `db.prepare(...)` rather than through `getRefreshLog` (Task 2) — `getRefreshLog` is scoped to one indicator, while health status needs the most recent entry across all indicators.
 - Produces:
   - `interface HealthStatus { status: "ok" | "degraded"; indicatorCount: number; lastRefreshAt: string | null }`
   - `getHealthStatus(db): HealthStatus`
