@@ -1,0 +1,8 @@
+{
+  "title": "Average Weekly Hours, Manufacturing",
+  "whatItMeasures": "The average number of hours production and nonsupervisory employees worked per week in manufacturing, from the BLS Current Employment Statistics survey.",
+  "whatItPredicts": "Employers typically adjust existing workers' hours before hiring or laying off staff, so this moves ahead of broader employment changes — a classic early signal of shifting labor demand.",
+  "sourceName": "Bureau of Labor Statistics (via FRED, series AWHMAN)",
+  "sourceUrl": "https://fred.stlouisfed.org/series/AWHMAN",
+  "isProxy": false
+}

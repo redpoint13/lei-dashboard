@@ -1,0 +1,10 @@
+{
+  "title": "Leading Credit Index",
+  "whatItMeasures": "A composite of financial indicators (including interest rate spreads, credit conditions, and risk measures) designed to capture tightening or loosening in credit markets.",
+  "whatItPredicts": "Credit conditions tend to tighten before economic downturns, as lenders pull back ahead of visible stress — this is a counter-cyclical-leaning measure where deteriorating (tighter) conditions are a warning sign, not a tailwind.",
+  "sourceName": "The Conference Board (official index is proprietary)",
+  "sourceUrl": "https://www.conference-board.org/topics/business-cycle-indicators",
+  "isProxy": true,
+  "proxyExplanation": "The Conference Board's Leading Credit Index is a proprietary, trademarked composite with no free public equivalent. This dashboard substitutes the Chicago Fed's National Financial Conditions Index (NFCI), which measures similar credit and financial-conditions stress but uses a different methodology and will diverge from the official LCI, especially during acute financial shocks.",
+  "proxyMethodologyUrl": "https://www.chicagofed.org/research/data/nfci/current-data"
+}

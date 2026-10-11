@@ -1,0 +1,8 @@
+{
+  "title": "Interest Rate Spread (10-Year Treasury minus Fed Funds)",
+  "whatItMeasures": "The gap between the 10-year Treasury yield and the federal funds rate — the slope of the yield curve between short- and long-term rates.",
+  "whatItPredicts": "A narrowing or inverted spread (short-term rates above long-term rates) has preceded most post-war U.S. recessions, reflecting markets pricing in future rate cuts in response to a weakening outlook.",
+  "sourceName": "Federal Reserve (via FRED, series T10YFF)",
+  "sourceUrl": "https://fred.stlouisfed.org/series/T10YFF",
+  "isProxy": false
+}

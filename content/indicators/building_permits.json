@@ -1,0 +1,8 @@
+{
+  "title": "Building Permits, New Private Housing Units",
+  "whatItMeasures": "The number of new private housing units authorized by building permits, a leading signal of upcoming residential construction activity.",
+  "whatItPredicts": "Permits are pulled before construction begins, so this leads actual housing starts and, with it, construction employment, materials demand, and related spending.",
+  "sourceName": "U.S. Census Bureau (via FRED, series PERMIT)",
+  "sourceUrl": "https://fred.stlouisfed.org/series/PERMIT",
+  "isProxy": false
+}
