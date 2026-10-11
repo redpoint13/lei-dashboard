@@ -93,4 +93,30 @@ describe("IndicatorChart", () => {
     );
     expect(screen.getByText(/proxy series/i)).toBeInTheDocument();
   });
+
+  it("does not show the proxy badge when content.isProxy is false", () => {
+    render(<IndicatorChart viewModel={base} />);
+    expect(screen.queryByText(/proxy series/i)).not.toBeInTheDocument();
+  });
+
+  it("renders recession shading even when period boundaries don't land on an observation date (daily series vs. monthly NBER boundaries)", () => {
+    const { container } = render(
+      <IndicatorChart
+        viewModel={{
+          ...base,
+          // Daily/sparse observation dates, like the real sp500/rate_spread
+          // series — none of these match the recession boundary dates below.
+          observations: [
+            { date: "2025-01-05", value: 40.1 },
+            { date: "2025-01-20", value: 40.3 },
+            { date: "2025-02-15", value: 40.5 },
+          ],
+          // First-of-month-style NBER boundaries that fall strictly inside
+          // the observation date range above, but never exactly match one.
+          recessionPeriods: [{ startDate: "2025-01-10", endDate: "2025-01-25" }],
+        }}
+      />,
+    );
+    expect(container.querySelector(".recharts-reference-area")).not.toBeNull();
+  });
 });
