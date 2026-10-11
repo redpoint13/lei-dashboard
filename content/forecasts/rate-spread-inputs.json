@@ -1,0 +1,16 @@
+{
+  "fedFunds": {
+    "asOf": "2025-12-10",
+    "horizon": "2026-12-31",
+    "value": 3.4,
+    "sourceUrl": "https://www.newyorkfed.org/medialibrary/media/markets/fomc-economicprojections-20251210.pdf",
+    "sourceLabel": "Federal Reserve Summary of Economic Projections, Dec 10 2025"
+  },
+  "treasury10yr": {
+    "asOf": "2025-12-19",
+    "horizon": "2026-12-31",
+    "value": 4.0,
+    "sourceUrl": "https://www.philadelphiafed.org/-/media/FRBP/Assets/Surveys-And-Data/livingston-survey/2025/livdec25.pdf",
+    "sourceLabel": "Philadelphia Fed Livingston Survey, December 2025"
+  }
+}

@@ -7,6 +7,7 @@ export async function register() {
   const { refreshAll, refreshRecessionPeriods, applyManualObservations } = await import(
     "./src/lib/refresh"
   );
+  const { applyCuratedForecasts } = await import("./src/lib/forecasts");
   const { startScheduler } = await import("./src/lib/scheduler");
 
   const db = getAppDb();
@@ -28,6 +29,7 @@ export async function register() {
       await refreshAll(db, INDICATOR_REGISTRY, apiKey);
       await refreshRecessionPeriods(db, apiKey);
       applyManualObservations(db, INDICATOR_REGISTRY);
+      applyCuratedForecasts(db);
     },
   });
 }
