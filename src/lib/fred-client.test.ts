@@ -51,4 +51,18 @@ describe("fetchFredSeries", () => {
       fetchFredSeries("SP500", "2025-07-01", "fake-key", fetchImpl),
     ).rejects.toBeInstanceOf(FredApiError);
   });
+
+  it("passes an AbortSignal (bounded timeout) so a hung upstream surfaces as a FredApiError instead of hanging forever", async () => {
+    const fetchImpl = vi.fn((_url: string, init?: RequestInit) => {
+      expect(init?.signal).toBeInstanceOf(AbortSignal);
+      // Simulate the upstream never responding and the timeout firing: fetch
+      // rejects with an abort error once the signal aborts.
+      return Promise.reject(new DOMException("The operation was aborted.", "TimeoutError"));
+    }) as unknown as typeof fetch;
+
+    await expect(
+      fetchFredSeries("SP500", "2025-07-01", "fake-key", fetchImpl),
+    ).rejects.toBeInstanceOf(FredApiError);
+    expect(fetchImpl).toHaveBeenCalled();
+  });
 });

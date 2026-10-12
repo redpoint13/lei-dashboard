@@ -21,7 +21,7 @@ export async function fetchFredSeries(
 
   let response: Response;
   try {
-    response = await fetchImpl(url.toString());
+    response = await fetchImpl(url.toString(), { signal: AbortSignal.timeout(30_000) });
   } catch (err) {
     throw new FredApiError(
       `Network error fetching FRED series ${seriesId}: ${(err as Error).message}`,
