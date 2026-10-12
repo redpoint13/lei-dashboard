@@ -124,6 +124,15 @@ export function logRefresh(
   ).run(indicatorId, new Date().toISOString(), status, detail ?? null);
 }
 
+export function getLastSuccessfulRefreshAt(db: Database.Database): string | null {
+  const row = db
+    .prepare(
+      "SELECT run_at as runAt FROM refresh_log WHERE status = 'ok' ORDER BY run_at DESC LIMIT 1",
+    )
+    .get() as { runAt: string } | undefined;
+  return row?.runAt ?? null;
+}
+
 export function getRefreshLog(
   db: Database.Database,
   indicatorId: string,

@@ -19,7 +19,6 @@ COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/.next ./.next
 COPY --from=build /app/public ./public
 COPY --from=build /app/content ./content
-COPY --from=build /app/instrumentation.ts ./instrumentation.ts
 VOLUME /data
 EXPOSE 3000
 CMD ["npm", "run", "start"]
