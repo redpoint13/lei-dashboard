@@ -7,9 +7,9 @@ const base: IndicatorDetailViewModel = {
   id: "avg_weekly_hours_mfg",
   content: {
     title: "Average Weekly Hours, Manufacturing",
-    whatItMeasures: "x",
-    whatItPredicts: "y",
-    sourceName: "z",
+    whatItMeasures: "Average weekly hours worked by production employees.",
+    whatItPredicts: "Overtime and hours cuts tend to lead hiring/layoff decisions.",
+    sourceName: "Bureau of Labor Statistics (via FRED, series AWHMAN)",
     sourceUrl: "https://example.org",
     isProxy: false,
   },
@@ -97,6 +97,44 @@ describe("IndicatorChart", () => {
   it("does not show the proxy badge when content.isProxy is false", () => {
     render(<IndicatorChart viewModel={base} />);
     expect(screen.queryByText(/proxy series/i)).not.toBeInTheDocument();
+  });
+
+  it("renders the plain-language description/source panel (what it measures, what it predicts, source link)", () => {
+    render(<IndicatorChart viewModel={base} />);
+    expect(screen.getByText(base.content.whatItMeasures)).toBeInTheDocument();
+    expect(screen.getByText(base.content.whatItPredicts)).toBeInTheDocument();
+    const sourceLink = screen.getByRole("link", { name: base.content.sourceName });
+    expect(sourceLink).toHaveAttribute("href", base.content.sourceUrl);
+  });
+
+  it("renders the forecast's asOf date and a link to its sourceUrl when a forecast is present", () => {
+    render(
+      <IndicatorChart
+        viewModel={{
+          ...base,
+          forecast: {
+            asOf: "2025-12-10 (Fed) / 2025-12-19 (Livingston)",
+            horizon: "2026-12-31",
+            value: 0.6,
+            sourceUrl: "https://example.org/forecast-source",
+            sourceLabel: "Test Source",
+          },
+          noForecastReason: null,
+        }}
+      />,
+    );
+    // Composite asOf strings (like the real rate_spread one) are rendered
+    // as-is, never parsed as a date.
+    expect(
+      screen.getByText(/As of 2025-12-10 \(Fed\) \/ 2025-12-19 \(Livingston\)/),
+    ).toBeInTheDocument();
+    const forecastLink = screen.getByRole("link", { name: "Test Source" });
+    expect(forecastLink).toHaveAttribute("href", "https://example.org/forecast-source");
+  });
+
+  it("does not render a forecast asOf line when there is no forecast", () => {
+    render(<IndicatorChart viewModel={base} />);
+    expect(screen.queryByText(/^As of /)).not.toBeInTheDocument();
   });
 
   it("renders recession shading even when period boundaries don't land on an observation date (daily series vs. monthly NBER boundaries)", () => {

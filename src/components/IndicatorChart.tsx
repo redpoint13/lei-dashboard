@@ -82,17 +82,40 @@ export function IndicatorChart({ viewModel }: { viewModel: IndicatorDetailViewMo
       </ResponsiveContainer>
 
       {forecast ? (
-        <p>
-          Forecast: {formatValue(forecast.value, displayFormat)}
-          {forecast.valueLow != null && forecast.valueHigh != null && (
-            <> (range: {formatValue(forecast.valueLow, displayFormat)}–
-              {formatValue(forecast.valueHigh, displayFormat)})</>
-          )}{" "}
-          by {forecast.horizon} (source: {forecast.sourceLabel})
-        </p>
+        <div>
+          <p>
+            Forecast: {formatValue(forecast.value, displayFormat)}
+            {forecast.valueLow != null && forecast.valueHigh != null && (
+              <> (range: {formatValue(forecast.valueLow, displayFormat)}–
+                {formatValue(forecast.valueHigh, displayFormat)})</>
+            )}{" "}
+            by {forecast.horizon} (source:{" "}
+            <a href={forecast.sourceUrl} target="_blank" rel="noopener noreferrer">
+              {forecast.sourceLabel}
+            </a>
+            )
+          </p>
+          {/* forecast.asOf for rate_spread is a composite string like
+              "2025-12-10 (Fed) / 2025-12-19 (Livingston)" — rendered as-is,
+              never parsed as a date. */}
+          <p>As of {forecast.asOf}</p>
+        </div>
       ) : (
         <p>{noForecastReason}</p>
       )}
+
+      <section aria-label="About this indicator">
+        <h3>What it measures</h3>
+        <p>{content.whatItMeasures}</p>
+        <h3>What it predicts</h3>
+        <p>{content.whatItPredicts}</p>
+        <p>
+          Source:{" "}
+          <a href={content.sourceUrl} target="_blank" rel="noopener noreferrer">
+            {content.sourceName}
+          </a>
+        </p>
+      </section>
     </div>
   );
 }
