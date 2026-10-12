@@ -1,6 +1,19 @@
 // src/lib/indicator-registry.ts
 import type { IndicatorDef } from "./db";
 
+/**
+ * Whether `id` is a valid indicator id for the detail page
+ * (`/indicators/[id]`). "headline" is excluded — it has its own card on the
+ * dashboard but no detail page of its own.
+ *
+ * Callers must check this BEFORE any file I/O or DB query for the id, so an
+ * unknown/garbage id produces a 404 instead of a non-null-assertion crash
+ * (500).
+ */
+export function isValidDetailIndicatorId(id: string): boolean {
+  return id !== "headline" && INDICATOR_REGISTRY.some((indicator) => indicator.id === id);
+}
+
 export const INDICATOR_REGISTRY: IndicatorDef[] = [
   {
     id: "avg_weekly_hours_mfg",

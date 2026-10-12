@@ -1,6 +1,6 @@
 // src/lib/indicator-registry.test.ts
 import { describe, it, expect } from "vitest";
-import { INDICATOR_REGISTRY } from "./indicator-registry";
+import { INDICATOR_REGISTRY, isValidDetailIndicatorId } from "./indicator-registry";
 
 describe("INDICATOR_REGISTRY", () => {
   it("has exactly 11 entries (10 LEI components + headline)", () => {
@@ -30,5 +30,19 @@ describe("INDICATOR_REGISTRY", () => {
         "consumer_expectations",
       ].sort(),
     );
+  });
+});
+
+describe("isValidDetailIndicatorId", () => {
+  it("returns true for a real, non-headline indicator id", () => {
+    expect(isValidDetailIndicatorId("sp500")).toBe(true);
+  });
+
+  it("returns false for the headline id (no detail page)", () => {
+    expect(isValidDetailIndicatorId("headline")).toBe(false);
+  });
+
+  it("returns false for an unknown id", () => {
+    expect(isValidDetailIndicatorId("totally-bogus-id")).toBe(false);
   });
 });
