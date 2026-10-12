@@ -1,0 +1,14 @@
+services:
+  dashboard:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - FRED_API_KEY=${FRED_API_KEY}
+      - DATA_DIR=/data
+    volumes:
+      - econ-data:/data
+    restart: unless-stopped
+
+volumes:
+  econ-data:
