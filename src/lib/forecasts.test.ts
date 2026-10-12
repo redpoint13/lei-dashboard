@@ -1,5 +1,8 @@
 // src/lib/forecasts.test.ts
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { mkdtempSync, writeFileSync, rmSync, mkdirSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import {
   computeRateSpreadForecast,
   loadRateSpreadForecast,
@@ -67,5 +70,72 @@ describe("applyCuratedForecasts", () => {
     applyCuratedForecasts(db);
     const rows = db.prepare("SELECT COUNT(*) as c FROM forecasts").get() as { c: number };
     expect(rows.c).toBe(2); // one row each for rate_spread and sp500, not duplicated
+  });
+});
+
+describe("curated-volume override for forecasts", () => {
+  let dataDir: string;
+
+  beforeEach(() => {
+    dataDir = mkdtempSync(path.join(tmpdir(), "econ-forecast-override-"));
+  });
+
+  afterEach(() => {
+    rmSync(dataDir, { recursive: true, force: true });
+    vi.unstubAllEnvs();
+  });
+
+  it("loadSp500Forecast prefers an override file on the mounted volume path", () => {
+    vi.stubEnv("DATA_DIR", dataDir);
+    mkdirSync(path.join(dataDir, "curated", "forecasts"), { recursive: true });
+    writeFileSync(
+      path.join(dataDir, "curated", "forecasts", "sp500.json"),
+      JSON.stringify({
+        asOf: "2026-02-01",
+        horizon: "2026-12-31",
+        value: 1234,
+        sourceUrl: "https://example.org",
+        sourceLabel: "Overridden source",
+      }),
+    );
+    expect(loadSp500Forecast().value).toBe(1234);
+  });
+
+  it("loadRateSpreadForecast prefers an override file on the mounted volume path", () => {
+    vi.stubEnv("DATA_DIR", dataDir);
+    mkdirSync(path.join(dataDir, "curated", "forecasts"), { recursive: true });
+    writeFileSync(
+      path.join(dataDir, "curated", "forecasts", "rate-spread-inputs.json"),
+      JSON.stringify({
+        fedFunds: {
+          asOf: "2026-01-01",
+          horizon: "2027-12-31",
+          value: 2,
+          sourceUrl: "https://example.org/fed",
+          sourceLabel: "Overridden Fed",
+        },
+        treasury10yr: {
+          asOf: "2026-01-02",
+          horizon: "2027-12-31",
+          value: 5,
+          sourceUrl: "https://example.org/treasury",
+          sourceLabel: "Overridden Treasury",
+        },
+      }),
+    );
+    expect(loadRateSpreadForecast()?.value).toBeCloseTo(3, 5);
+  });
+
+  it("falls back to the repo default when the forecast override has the wrong shape", () => {
+    vi.stubEnv("DATA_DIR", dataDir);
+    mkdirSync(path.join(dataDir, "curated", "forecasts"), { recursive: true });
+    writeFileSync(
+      path.join(dataDir, "curated", "forecasts", "sp500.json"),
+      JSON.stringify({ value: "not a number" }),
+    );
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    expect(loadSp500Forecast().value).toBe(7600); // repo default from content/forecasts/sp500.json
+    expect(errorSpy).toHaveBeenCalled();
+    errorSpy.mockRestore();
   });
 });

@@ -1,8 +1,8 @@
 // src/lib/forecasts.ts
-import { readFileSync } from "node:fs";
 import path from "node:path";
 import type Database from "better-sqlite3";
 import { upsertForecast } from "./db";
+import { loadCuratedJson } from "./content";
 
 export interface ForecastInput {
   asOf: string;
@@ -38,27 +38,53 @@ export function computeRateSpreadForecast(
   };
 }
 
-export function loadRateSpreadForecast(): ForecastValue | null {
-  const inputsPath = path.join(
-    process.cwd(),
-    "content",
-    "forecasts",
-    "rate-spread-inputs.json",
+function isForecastInput(value: unknown): value is ForecastInput {
+  if (typeof value !== "object" || value === null) return false;
+  const v = value as Record<string, unknown>;
+  return (
+    typeof v.asOf === "string" &&
+    typeof v.horizon === "string" &&
+    typeof v.value === "number" &&
+    typeof v.sourceUrl === "string" &&
+    typeof v.sourceLabel === "string"
   );
-  const { fedFunds, treasury10yr } = JSON.parse(
-    readFileSync(inputsPath, "utf-8"),
-  ) as { fedFunds: ForecastInput; treasury10yr: ForecastInput };
+}
+
+function isRateSpreadInputs(
+  value: unknown,
+): value is { fedFunds: ForecastInput; treasury10yr: ForecastInput } {
+  if (typeof value !== "object" || value === null) return false;
+  const v = value as Record<string, unknown>;
+  return isForecastInput(v.fedFunds) && isForecastInput(v.treasury10yr);
+}
+
+function isForecastValue(value: unknown): value is ForecastValue {
+  if (typeof value !== "object" || value === null) return false;
+  const v = value as Record<string, unknown>;
+  return (
+    typeof v.asOf === "string" &&
+    typeof v.horizon === "string" &&
+    typeof v.value === "number" &&
+    typeof v.sourceUrl === "string" &&
+    typeof v.sourceLabel === "string"
+  );
+}
+
+export function loadRateSpreadForecast(): ForecastValue | null {
+  const { fedFunds, treasury10yr } = loadCuratedJson(
+    path.join("forecasts", "rate-spread-inputs.json"),
+    path.join("forecasts", "rate-spread-inputs.json"),
+    isRateSpreadInputs,
+  );
   return computeRateSpreadForecast(fedFunds, treasury10yr);
 }
 
 export function loadSp500Forecast(): ForecastValue {
-  const forecastPath = path.join(
-    process.cwd(),
-    "content",
-    "forecasts",
-    "sp500.json",
+  return loadCuratedJson(
+    path.join("forecasts", "sp500.json"),
+    path.join("forecasts", "sp500.json"),
+    isForecastValue,
   );
-  return JSON.parse(readFileSync(forecastPath, "utf-8")) as ForecastValue;
 }
 
 export function applyCuratedForecasts(db: Database.Database): void {
