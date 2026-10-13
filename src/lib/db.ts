@@ -86,6 +86,19 @@ export function getObservations(
     .all(indicatorId) as { date: string; value: number }[];
 }
 
+export function getRecentObservations(
+  db: Database.Database,
+  indicatorId: string,
+  limit: number,
+): { date: string; value: number }[] {
+  const rows = db
+    .prepare(
+      "SELECT date, value FROM observations WHERE indicator_id = ? ORDER BY date DESC LIMIT ?",
+    )
+    .all(indicatorId, limit) as { date: string; value: number }[];
+  return rows.reverse();
+}
+
 export function getLatestObservation(
   db: Database.Database,
   indicatorId: string,

@@ -16,4 +16,16 @@ describe("ProxyBadge", () => {
       "https://example.org/methodology",
     );
   });
+
+  it("separates the explanation text from the methodology link with a space", () => {
+    render(
+      <ProxyBadge
+        explanation="Substitute series, not the official component."
+        methodologyUrl="https://example.org/methodology"
+      />,
+    );
+    expect(screen.getByRole("note").textContent).toContain(
+      "component. Read the methodology note",
+    );
+  });
 });

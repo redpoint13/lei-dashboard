@@ -10,7 +10,10 @@ export function ProxyBadge({
     <aside role="note" aria-label="Proxy series notice">
       <strong>Proxy series:</strong> {explanation}
       {methodologyUrl && (
-        <a href={methodologyUrl}>Read the methodology note</a>
+        <>
+          {" "}
+          <a href={methodologyUrl}>Read the methodology note</a>
+        </>
       )}
     </aside>
   );

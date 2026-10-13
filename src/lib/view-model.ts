@@ -1,6 +1,12 @@
 // src/lib/view-model.ts
 import type Database from "better-sqlite3";
-import { getLatestObservation, getObservations, getRecessionPeriods, getLatestForecast } from "./db";
+import {
+  getLatestObservation,
+  getObservations,
+  getRecentObservations,
+  getRecessionPeriods,
+  getLatestForecast,
+} from "./db";
 import { INDICATOR_REGISTRY } from "./indicator-registry";
 import { loadIndicatorContent, loadHeadlineContent } from "./content";
 import type { IndicatorContent, HeadlineContent } from "./content";
@@ -30,8 +36,10 @@ export function buildDashboardViewModel(
   const cards = INDICATOR_REGISTRY.filter((indicator) => indicator.id !== "headline").map(
     (indicator) => {
       const latestValue = getLatestObservation(db, indicator.id);
-      const recentObservations = getObservations(db, indicator.id).slice(
-        -SPARKLINE_POINTS,
+      const recentObservations = getRecentObservations(
+        db,
+        indicator.id,
+        SPARKLINE_POINTS,
       );
       return {
         id: indicator.id,

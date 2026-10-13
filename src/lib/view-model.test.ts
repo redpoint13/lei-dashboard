@@ -26,6 +26,26 @@ describe("buildDashboardViewModel", () => {
 
     expect(viewModel.headline.indexLevel).toBeGreaterThan(0);
   });
+
+  it("caps recentObservations at 24 points even with much longer history", () => {
+    const db = openDb(":memory:");
+    seedIndicators(db, INDICATOR_REGISTRY);
+    const dates = Array.from({ length: 40 }, (_, i) =>
+      new Date(Date.UTC(2026, 0, 1) + i * 86_400_000).toISOString().slice(0, 10),
+    );
+    upsertObservations(
+      db,
+      "sp500",
+      dates.map((date, i) => ({ date, value: 6000 + i })),
+    );
+
+    const viewModel = buildDashboardViewModel(db, new Date("2026-02-15T00:00:00.000Z"));
+
+    const sp500Card = viewModel.cards.find((c) => c.id === "sp500")!;
+    expect(sp500Card.recentObservations).toHaveLength(24);
+    expect(sp500Card.recentObservations[0].date).toBe("2026-01-17");
+    expect(sp500Card.recentObservations[23].date).toBe("2026-02-09");
+  });
 });
 
 describe("buildIndicatorDetailViewModel", () => {

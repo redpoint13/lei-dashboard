@@ -4,6 +4,7 @@ import {
   openDb,
   upsertObservations,
   getObservations,
+  getRecentObservations,
   getLatestObservation,
   hasObservationsFor,
   hasAnyObservations,
@@ -74,6 +75,39 @@ describe("upsertObservations / getObservations", () => {
       date: "2026-01-02",
       value: 6100.5,
     });
+  });
+});
+
+describe("getRecentObservations", () => {
+  it("returns only the most recent `limit` rows, ascending by date", () => {
+    const db = freshDb();
+    const dates = Array.from({ length: 30 }, (_, i) => {
+      const day = String(i + 1).padStart(2, "0");
+      return `2026-01-${day}`;
+    });
+    upsertObservations(
+      db,
+      "sp500",
+      dates.map((date, i) => ({ date, value: 6000 + i })),
+    );
+
+    const recent = getRecentObservations(db, "sp500", 5);
+
+    expect(recent).toEqual([
+      { date: "2026-01-26", value: 6025 },
+      { date: "2026-01-27", value: 6026 },
+      { date: "2026-01-28", value: 6027 },
+      { date: "2026-01-29", value: 6028 },
+      { date: "2026-01-30", value: 6029 },
+    ]);
+  });
+
+  it("returns every row when there are fewer than `limit`", () => {
+    const db = freshDb();
+    upsertObservations(db, "sp500", [{ date: "2026-01-01", value: 6090.1 }]);
+    expect(getRecentObservations(db, "sp500", 24)).toEqual([
+      { date: "2026-01-01", value: 6090.1 },
+    ]);
   });
 });
 
