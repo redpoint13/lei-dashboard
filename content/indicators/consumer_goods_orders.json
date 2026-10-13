@@ -1,0 +1,10 @@
+{
+  "title": "New Orders, Consumer Goods and Materials",
+  "whatItMeasures": "New factory orders for consumer goods — an indicator of near-term manufacturing demand tied to household spending.",
+  "whatItPredicts": "Rising new orders signal manufacturers expect stronger consumer demand ahead; this is one of the more volatile, forward-looking LEI components.",
+  "sourceName": "U.S. Census Bureau (via FRED, series ACOGNO)",
+  "sourceUrl": "https://fred.stlouisfed.org/series/ACOGNO",
+  "isProxy": true,
+  "proxyExplanation": "The official Conference Board component combines consumer goods AND materials new orders, and is explicitly footnoted in their own technical notes as 'based on our estimates' — it is not a pass-through of any single public series. ACOGNO (consumer goods new orders only) is the closest free available input, not a full replica.",
+  "proxyMethodologyUrl": "https://www.conference-board.org/pdf_free/press/US%20LEI%20Technical%20Notes-Feb%202026.pdf"
+}

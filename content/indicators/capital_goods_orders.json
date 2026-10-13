@@ -1,0 +1,8 @@
+{
+  "title": "New Orders, Nondefense Capital Goods Excluding Aircraft",
+  "whatItMeasures": "New factory orders for business equipment and machinery, excluding the lumpy, defense and aircraft categories — a cleaner read on underlying business investment plans.",
+  "whatItPredicts": "Businesses order capital equipment when they plan to expand capacity, so this leads broader business investment and, with a longer lag, overall economic output.",
+  "sourceName": "U.S. Census Bureau (via FRED, series NEWORDER)",
+  "sourceUrl": "https://fred.stlouisfed.org/series/NEWORDER",
+  "isProxy": false
+}

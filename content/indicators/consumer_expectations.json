@@ -1,0 +1,10 @@
+{
+  "title": "Average Consumer Expectations for Business Conditions",
+  "whatItMeasures": "How households expect their own finances, and the broader economy, to perform over the near and longer term.",
+  "whatItPredicts": "Consumer spending drives most of U.S. GDP, so a shift in households' outlook — even before their actual spending changes — tends to lead changes in real economic activity.",
+  "sourceName": "University of Michigan Surveys of Consumers",
+  "sourceUrl": "https://fred.stlouisfed.org/series/UMCSENT",
+  "isProxy": true,
+  "proxyExplanation": "The official LEI component uses the Michigan survey's distinct 'Index of Consumer Expectations' sub-index. FRED does not carry that sub-index as its own free series — UMCSENT (overall Consumer Sentiment, which blends current conditions with expectations) is the closest free proxy and will move somewhat differently, especially when current conditions and expectations diverge.",
+  "proxyMethodologyUrl": "https://www.sca.isr.umich.edu/"
+}

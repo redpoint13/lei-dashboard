@@ -1,0 +1,10 @@
+{
+  "title": "ISM Index of New Orders",
+  "whatItMeasures": "A diffusion index from the Institute for Supply Management's monthly survey of purchasing managers, tracking whether new manufacturing orders are expanding (above 50) or contracting (below 50).",
+  "whatItPredicts": "New orders lead production — purchasing managers see incoming demand before it shows up in output, making this one of the most responsive LEI components to changing business conditions.",
+  "sourceName": "Institute for Supply Management",
+  "sourceUrl": "https://www.ismworld.org/supply-management-news-and-reports/reports/ism-report-on-business/pmi/",
+  "isProxy": true,
+  "proxyExplanation": "ISM licenses the full data series; there is no free API. This dashboard's value is transcribed monthly, by hand, from ISM's free public press-release headline — it is the real published figure, just not automatically fetched.",
+  "proxyMethodologyUrl": "https://www.ismworld.org/supply-management-news-and-reports/reports/ism-report-on-business/pmi/"
+}

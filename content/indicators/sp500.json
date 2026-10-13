@@ -1,0 +1,8 @@
+{
+  "title": "S&P 500 Stock Index",
+  "whatItMeasures": "The market-capitalization-weighted price of the 500 largest publicly traded U.S. companies.",
+  "whatItPredicts": "Stock prices reflect investors' aggregate, forward-looking expectations of corporate earnings and economic conditions — markets tend to move before the economic data confirms a turn.",
+  "sourceName": "S&P Dow Jones Indices (via FRED, series SP500)",
+  "sourceUrl": "https://fred.stlouisfed.org/series/SP500",
+  "isProxy": false
+}

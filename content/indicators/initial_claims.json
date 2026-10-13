@@ -1,0 +1,8 @@
+{
+  "title": "Average Weekly Initial Jobless Claims",
+  "whatItMeasures": "The number of people filing first-time claims for unemployment insurance each week, seasonally adjusted.",
+  "whatItPredicts": "A rising trend signals weakening labor demand before it shows up in the monthly unemployment rate — this is a counter-cyclical indicator: rising claims mean worsening conditions, not improving ones.",
+  "sourceName": "U.S. Department of Labor (via FRED, series ICSA)",
+  "sourceUrl": "https://fred.stlouisfed.org/series/ICSA",
+  "isProxy": false
+}
