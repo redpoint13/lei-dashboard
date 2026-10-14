@@ -1,5 +1,8 @@
 // src/lib/db.test.ts
 import { describe, it, expect, beforeEach } from "vitest";
+import { existsSync, mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import {
   openDb,
   upsertObservations,
@@ -23,6 +26,15 @@ function freshDb(): Database.Database {
 }
 
 describe("openDb", () => {
+  it("creates the data directory first if it doesn't exist yet", () => {
+    const base = mkdtempSync(path.join(tmpdir(), "lei-db-test-"));
+    const dbPath = path.join(base, "nested", "dir", "econ.db");
+    const db = openDb(dbPath);
+    expect(existsSync(dbPath)).toBe(true);
+    db.close();
+    rmSync(base, { recursive: true, force: true });
+  });
+
   it("creates all required tables", () => {
     const db = freshDb();
     const tables = db
